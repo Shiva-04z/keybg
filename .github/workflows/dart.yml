@@ -23,17 +23,22 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.5'  # Use your Flutter version
+          flutter-version: '3.32.5'
 
       # Get dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # Build APK
-      - name: Build release APK
+      # Decode base64 keystore
+      - name: Decode keystore from base64
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+
+      # Build release APK
+      - name: Build signed release APK
         run: flutter build apk --release
 
-      # Create GitHub Release and upload APK
+      # Upload APK to GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:

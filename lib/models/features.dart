@@ -6,12 +6,15 @@ class Features {
   bool isSoftBoot;
   bool isHardReset;
   bool isOutgoingCalls;
+  bool isIncomingCalls;
   bool isSetting;
   List<String> apps;
   bool warningAudio;
   bool warningWallpaper;
   String passwordChange;
   bool isDeveloperOptions;
+  bool isLockEnable;
+  bool isAppBlocking;
   String wallpaperUrl;
 
   Features({
@@ -29,6 +32,9 @@ class Features {
     required this.passwordChange,
     required this.isDeveloperOptions,
     required this.wallpaperUrl,
+    required this.isIncomingCalls,
+    required this.isAppBlocking,
+    required this.isLockEnable,
   });
 
   factory Features.fromJson(Map<String, dynamic> json) => Features(
@@ -46,6 +52,9 @@ class Features {
     passwordChange: json['passwordChange'] as String,
     isDeveloperOptions: json['isDeveloperOptions'] as bool,
     wallpaperUrl: json['wallpaperUrl'] as String,
+    isIncomingCalls: json['isIncomingCalls'] as bool,
+    isAppBlocking: json['isAppBlocking'] as bool,
+    isLockEnable:  json['isLockEnable'] as bool,
   );
 
   Map<String, dynamic> toJson() => {
@@ -63,6 +72,9 @@ class Features {
     'passwordChange': passwordChange,
     'isDeveloperOptions': isDeveloperOptions,
     'wallpaperUrl': wallpaperUrl,
+    'isIncomingCalls': isIncomingCalls,
+    'isAppBlocking':isAppBlocking,
+    'isLockEnable': isLockEnable
   };
 
   Features copyWith({
@@ -77,9 +89,12 @@ class Features {
     List<String>? apps,
     bool? warningAudio,
     bool? warningWallpaper,
+    bool? isAppBlocking,
+    bool? isLockEnable,
     String? passwordChange,
     bool? isDeveloperOptions,
     String? wallpaperUrl,
+    bool? isIncomingCalls
   }) {
     return Features(
       isUSBDebug: isUSBDebug ?? this.isUSBDebug,
@@ -96,6 +111,10 @@ class Features {
       passwordChange: passwordChange ?? this.passwordChange,
       isDeveloperOptions: isDeveloperOptions ?? this.isDeveloperOptions,
       wallpaperUrl: wallpaperUrl ?? this.wallpaperUrl,
+      isIncomingCalls: isIncomingCalls ?? this.isIncomingCalls,
+      isLockEnable: isLockEnable ?? this.isLockEnable,
+      isAppBlocking: isAppBlocking ?? this.isAppBlocking,
+
     );
   }
 }

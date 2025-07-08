@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "587406103247",
+    "project_id": "keygenration",
+    "storage_bucket": "keygenration.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587406103247:android:896d6eba83f9b5521d9dba",
+        "android_client_info": {
+          "package_name": "com.rishiwar.keybg"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdIlGyiI8xmsjCmK9VpLFb_legv8yXWkw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

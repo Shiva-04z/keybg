@@ -14,12 +14,13 @@ class Retailer {
   });
 
   factory Retailer.fromJson(Map<String, dynamic> json) => Retailer(
-    id: json['id'] as String,
-    shopName: json['shop_name'] as String,
-    qrUrl: json['qr_url'] as String,
-    phoneNumber: json['phone_number'] as String,
-    email: json['email'] as String,
+    id: json['id'] as String? ?? '',
+    shopName: json['shopName'] as String? ?? '',
+    qrUrl: json['qrUrl'] as String? ?? '',
+    phoneNumber: json['phoneNumber'] as String? ?? '',
+    email: json['email'] as String? ?? '',
   );
+
 
   Map<String, dynamic> toJson() => {
     'id': id,

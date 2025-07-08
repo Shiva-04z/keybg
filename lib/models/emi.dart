@@ -1,8 +1,6 @@
 import 'dart:ffi';
 
 class EMI {
-  String id;
-  String uniqueKey;
   double totalAmount;
   double totalAmountLeft;
   String emiName;
@@ -11,8 +9,7 @@ class EMI {
   DateTime dueDate;
 
   EMI({
-    required this.id,
-    required this.uniqueKey,
+
     required this.totalAmount,
     required this.totalAmountLeft,
     required this.emiName,
@@ -21,20 +18,19 @@ class EMI {
     required this.dueDate,
   });
 
-  factory EMI.fromJson(Map<String, dynamic> json) => EMI(
-    id: json['id'] as String,
-    uniqueKey: json['unique_key'] as String,
-    totalAmount: (json['total_amount'] as num).toDouble(),
-    totalAmountLeft: (json['total_amount_left'] as num).toDouble(),
-    emiName: json['emi_name'] as String,
-    emiLeft: json['emi_left'] as int,
-    paymentAmount: (json['payment_amount'] as num).toDouble(),
-    dueDate: DateTime.parse(json['due_date'] as String),
-  );
+  factory EMI.fromJson(Map<String, dynamic> json) {
+    return EMI(
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      totalAmountLeft: (json['totalAmountLeft'] as num?)?.toDouble() ?? 0.0,
+      emiName: json['emiName'] as String? ?? '',
+      emiLeft: json['emiLeft'] as int? ?? 0,
+      paymentAmount: (json['paymentAmount'] as num?)?.toDouble() ?? 0.0,
+      dueDate: DateTime.tryParse(json['dueDate'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
+
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'unique_key': uniqueKey,
     'total_amount': totalAmount,
     'total_amount_left': totalAmountLeft,
     'emi_name': emiName,
@@ -44,8 +40,7 @@ class EMI {
   };
 
   EMI copyWith({
-    String? id,
-    String? uniqueKey,
+
     double? totalAmount,
     double? totalAmountLeft,
     String? emiName,
@@ -54,8 +49,7 @@ class EMI {
     DateTime? dueDate,
   }) {
     return EMI(
-      id: id ?? this.id,
-      uniqueKey: uniqueKey ?? this.uniqueKey,
+
       totalAmount: totalAmount ?? this.totalAmount,
       totalAmountLeft: totalAmountLeft ?? this.totalAmountLeft,
       emiName: emiName ?? this.emiName,

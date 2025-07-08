@@ -1,3 +1,5 @@
+import 'package:keybg/models/emi.dart';
+import 'package:keybg/models/features.dart';
 import 'package:keybg/models/retailer.dart';
 
 class User {
@@ -8,6 +10,8 @@ class User {
   String imei2;
   dynamic location;
   String getRecentContacts;
+  Features features;
+  EMI emi;
 
   User({
     required this.uniqueKey,
@@ -17,16 +21,24 @@ class User {
     required this.imei2,
     required this.location,
     required this.getRecentContacts,
+    required this.features,
+    required this.emi,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-    uniqueKey: json['unique_key'] as String,
-    retailerId: json['retailer_id'] as String,
-    retailer: Retailer.fromJson(json['retailer'] as Map<String, dynamic>),
-    imei1: json['imei1'] as String,
-    imei2: json['imei2'] as String,
+    uniqueKey: json['unique_key'] as String? ?? '',
+    retailerId: json['retailer_id'] as String? ?? '',
+    retailer: Retailer.fromJson(
+      Map<String, dynamic>.from(json['retailer'] ?? {}),
+    ),
+    imei1: json['imei1'] as String? ?? '',
+    imei2: json['imei2'] as String? ?? '',
     location: json['location'],
-    getRecentContacts: json['get_recent_contacts'] as String,
+    getRecentContacts: json['get_recent_contacts'] as String? ?? '',
+    features: Features.fromJson(
+      Map<String, dynamic>.from(json['features'] ?? {}),
+    ),
+    emi: EMI.fromJson(Map<String, dynamic>.from(json['emi'] ?? {})),
   );
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +49,8 @@ class User {
     'imei2': imei2,
     'location': location,
     'get_recent_contacts': getRecentContacts,
+    'features': features.toJson(),
+    'emi': emi.toJson(),
   };
 
   User copyWith({
@@ -47,6 +61,8 @@ class User {
     String? imei2,
     dynamic location,
     String? getRecentContacts,
+    Features? features,
+    EMI? emi,
   }) {
     return User(
       uniqueKey: uniqueKey ?? this.uniqueKey,
@@ -56,6 +72,8 @@ class User {
       imei2: imei2 ?? this.imei2,
       location: location ?? this.location,
       getRecentContacts: getRecentContacts ?? this.getRecentContacts,
+      features: features ?? this.features,
+      emi: emi ?? this.emi,
     );
   }
 }

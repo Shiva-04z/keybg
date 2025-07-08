@@ -1,9 +1,14 @@
-name: Release Flutter APK
+name: Manually Release Flutter APK
 
 on:
-  push:
-    tags:
-      - 'v*'  # Example: v1.0.0
+  workflow_dispatch:  # Manual trigger from GitHub UI
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.0.0)'
+        required: true
+      release_notes:
+        description: 'Release notes'
+        required: false
 
 jobs:
   build:
@@ -18,7 +23,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'  # or your Flutter version
+          flutter-version: '3.22.0'  # Use your Flutter version
 
       # Get dependencies
       - name: Install dependencies
@@ -28,10 +33,13 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release
 
-      # Upload APK to GitHub release
+      # Create GitHub Release and upload APK
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: ${{ github.event.inputs.version }}
+          body: ${{ github.event.inputs.release_notes }}
           files: build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

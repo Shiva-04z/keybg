@@ -1,9 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
 <device-admin xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-policies>
+        <!-- YOUR EXISTING POLICIES -->
         <force-lock />
         <wipe-data />
         <disable-camera />
         <limit-password />
+
+        <!-- REQUIRED FOR PROVISIONING -->
+        <set-profile-owner />
     </uses-policies>
 </device-admin>

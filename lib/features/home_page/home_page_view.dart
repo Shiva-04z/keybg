@@ -4,6 +4,7 @@ import 'package:keybg/features/home_page/home_page_controller.dart';
 import 'package:keybg/models/features.dart';
 import 'package:keybg/naviagtion/RoutesConstant.dart';
 import 'package:keybg/services/dpc_service.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class HomePageView extends GetView<HomePageController> {
   @override
@@ -33,7 +34,7 @@ class HomePageView extends GetView<HomePageController> {
               icon: Icon(Icons.fullscreen),
               onPressed: () {
                 Get.toNamed(RoutesConstant.testPage);
-                 },
+              },
             ),
           ],
         ),
@@ -133,8 +134,12 @@ class HomePageView extends GetView<HomePageController> {
                           Container(
                             height: 300,
                             width: 200,
-
-                            child: Image(image: NetworkImage(retailer.qrUrl)),
+                            child: QrImageView(
+                              data:
+                                  'upi://pay?pa=${retailer.qrUrl}&pn=${Uri.encodeComponent(retailer.shopName)}&am=${controller.emi.value?.paymentAmount}&cu=INR',
+                              version: QrVersions.auto,
+                              size: 200.0,
+                            ),
                             padding: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.all(
@@ -262,7 +267,9 @@ class HomePageView extends GetView<HomePageController> {
                                     ),
                                   ),
                                   Text(
-                                    emi.dueDate.toLocal().toString().split(' ')[0],
+                                    emi.dueDate.toLocal().toString().split(
+                                      ' ',
+                                    )[0],
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -550,6 +557,69 @@ class HomePageView extends GetView<HomePageController> {
                         color: Colors.deepPurple,
                       ),
                     ),
+                    SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        controller.launchKioskMode();
+                      },
+                      icon: Icon(Icons.lock),
+                      label: Text('Launch Kiosk Mode'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    Obx(() {
+                      if (controller.isKioskMode.value) {
+                        return Column(
+                          children: [
+                            SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                controller.exitKioskMode();
+                              },
+                              icon: Icon(Icons.exit_to_app),
+                              label: Text('Exit Kiosk Mode'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return SizedBox.shrink();
+                    }),
+                    Obx(() {
+                      if (controller.isKioskMode.value) {
+                        Future.delayed(Duration.zero, () {
+                          showDialog(
+                            context: context,
+                            builder:
+                                (context) => AlertDialog(
+                                  title: Text('Kiosk Mode'),
+                                  content: Text('Kiosk mode is now active!'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed:
+                                          () => Navigator.of(context).pop(),
+                                      child: Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                          );
+                        });
+                      }
+                      return SizedBox.shrink();
+                    }),
                     SizedBox(height: 16),
                     _buildFeatureItem('USB Debug', features.isUSBDebug),
                     _buildFeatureItem('Camera', features.isCamera),

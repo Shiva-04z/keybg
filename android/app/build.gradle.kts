@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
         applicationId = "com.rishiwar.keybg"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -33,9 +33,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("upload-keystore.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
+            storePassword = "Shivalik"
+            keyAlias = "keybgkey"  // or whatever alias you used
+            keyPassword = "Shivalik"
         }
     }
 

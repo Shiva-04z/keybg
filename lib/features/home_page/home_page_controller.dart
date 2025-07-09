@@ -6,44 +6,46 @@ import 'package:keybg/models/features.dart';
 import 'package:keybg/models/emi.dart';
 import 'package:keybg/models/retailer.dart';
 import 'package:keybg/services/dpc_service.dart';
+import 'package:kiosk_mode/kiosk_mode.dart';
 
 class HomePageController extends GetxController {
   Rx<Features?> features = Rx<Features?>(null);
   Rx<EMI?> emi = Rx<EMI?>(null);
   Rx<Retailer?> retailer = Rx<Retailer?>(null);
-  late final DatabaseReference _userRef;
   StreamSubscription<DatabaseEvent>? _userSubscription;
-  final userId = '-OTC7uPVN_8n5tqJY_5b';
+  RxString userId = '-OTC7uPVN_8n5tqJY_5b'.obs;
+  late DatabaseReference _userRef;
+  var isKioskMode = false.obs;
 
   @override
   void onInit() {
     super.onInit();
+    _userRef = FirebaseDatabase.instance.ref('users/${userId.value}');
+    _sendAcknowledgement("Instance Created");
     loadData();
   }
 
-
-  void _sendAcknowledgement()
-  {    _userRef.child("users/$userId").update(
-      {"Acknowledgement" : DateTime.now()}
-    );
+  Future<void> _sendAcknowledgement(String status) async {
+    await _userRef.update({"Status": status});
+    print("Done");
   }
 
   void loadData() {
-
-    _userRef = FirebaseDatabase.instance.ref('users/$userId');
-
     _userSubscription = _userRef.onValue.listen(
       (event) {
         if (event.snapshot.exists) {
           final data = event.snapshot.value as Map?;
           if (data != null) {
-            if (data['features'] != null) {
-              features.value = Features.fromJson(
-                Map<String, dynamic>.from(data['features']),
-              );
-              print(features.value);
-              applyRestrictions();
-              _sendAcknowledgement();
+            if (data['changed']) {
+              _sendAcknowledgement("Request Received");
+              if (data['features'] != null) {
+                features.value = Features.fromJson(
+                  Map<String, dynamic>.from(data['features']),
+                );
+                applyRestrictions();
+                _sendAcknowledgement("Request Fulfilled");
+                _userRef.update({"changed": false});
+              }
             }
             if (data['emi'] != null) {
               print(data['emi']);
@@ -78,8 +80,9 @@ class HomePageController extends GetxController {
     // Block apps
     await DpcBridge.blockApps(f.apps);
     // Set wallpaper
-    if(f.warningWallpaper){
-    await DpcBridge.setWallpaper(f.wallpaperUrl);}
+    if (f.warningWallpaper) {
+      await DpcBridge.setWallpaper(f.wallpaperUrl);
+    }
     // Play warning audio if enabled
     if (f.warningAudio) {
       await DpcBridge.playWarningAudio();
@@ -88,9 +91,30 @@ class HomePageController extends GetxController {
     if (f.passwordChange.isNotEmpty) {
       await DpcBridge.setPassword(f.passwordChange);
     }
-    (f.isIncomingCalls)? await DpcBridge.enableIncomingCalls():DpcBridge.disableIncomingCalls();
-    (f.isOutgoingCalls)? await DpcBridge.enableOutgoingCalls(): DpcBridge.enableOutgoingCalls();
+    (f.isIncomingCalls)
+        ? await DpcBridge.enableIncomingCalls()
+        : DpcBridge.disableIncomingCalls();
+    (f.isOutgoingCalls)
+        ? await DpcBridge.enableOutgoingCalls()
+        : DpcBridge.enableOutgoingCalls();
+  }
 
+  void launchKioskMode() async {
+    isKioskMode.value = true;
+    try {
+      await startKioskMode();
+    } catch (e) {
+      print('Failed to start kiosk mode: $e');
+    }
+  }
+
+  void exitKioskMode() async {
+    isKioskMode.value = false;
+    try {
+      await stopKioskMode();
+    } catch (e) {
+      print('Failed to exit kiosk mode: $e');
+    }
   }
 
   @override

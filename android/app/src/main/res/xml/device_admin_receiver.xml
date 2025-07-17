@@ -1,12 +1,15 @@
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <uses-policies>
-        <!-- YOUR EXISTING POLICIES -->
+        <!-- Standard Device Admin Policies -->
         <force-lock />
         <wipe-data />
         <disable-camera />
         <limit-password />
 
-        <!-- REQUIRED FOR PROVISIONING -->
-        <set-profile-owner />
+        <!-- Provisioning Policies (Note the 'app:' prefix) -->
+        <app:set-profile-owner />
+        <app:set-device-owner />
     </uses-policies>
 </device-admin>

@@ -16,6 +16,7 @@ class HomePageController extends GetxController {
   RxString userId = '-OTC7uPVN_8n5tqJY_5b'.obs;
   late DatabaseReference _userRef;
   var isKioskMode = false.obs;
+  List<String> codes = ["782453", "987902", "882233", "475801"];
 
   @override
   void onInit() {

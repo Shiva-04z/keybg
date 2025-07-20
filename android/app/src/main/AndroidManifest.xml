@@ -3,16 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.rishiwar.keybg">
 
-    <!-- YOUR ORIGINAL PERMISSIONS (KEPT) -->
+    <!-- Required for device admin apps -->
     <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN"
         tools:ignore="ProtectedPermissions" />
+
+    <!-- Optional permissions depending on your app features -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
-
-    <!-- CRITICAL ADDITION FOR PROVISIONING -->
-    <uses-permission android:name="android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS"
-        tools:ignore="ProtectedPermissions" />
 
     <application
         android:label="keybg"
@@ -20,7 +18,7 @@
         android:icon="@mipmap/ic_launcher"
         tools:ignore="ForegroundServicePermission">
 
-        <!-- YOUR ORIGINAL MAIN ACTIVITY (UNCHANGED) -->
+        <!-- MainActivity to launch after provisioning -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -37,11 +35,10 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
-
             </intent-filter>
         </activity>
 
-        <!-- YOUR BOOT RECEIVER (KEPT AS-IS) -->
+        <!-- Receiver for device boot -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
@@ -51,17 +48,13 @@
             </intent-filter>
         </receiver>
 
-        <!-- ENHANCED DEVICE ADMIN RECEIVER (NOW PROVISIONING-COMPATIBLE) -->
+        <!-- Device Admin Receiver: handles provisioning and admin events -->
         <receiver
             android:name=".MyDeviceAdminReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
-            <!-- YOUR ORIGINAL INTENT FILTER -->
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-            </intent-filter>
-            <!-- ADDED FOR PROVISIONING SUPPORT -->
-            <intent-filter>
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
             </intent-filter>
             <meta-data
@@ -69,7 +62,7 @@
                 android:resource="@xml/device_admin_receiver" />
         </receiver>
 
-        <!-- YOUR FOREGROUND SERVICE (KEPT) -->
+        <!-- Foreground service used by your app -->
         <service
             android:name=".MyForegroundService"
             android:enabled="true"
@@ -77,13 +70,13 @@
             android:foregroundServiceType="dataSync"
             tools:ignore="WrongManifestParent" />
 
-        <!-- FLUTTER METADATA (KEPT) -->
+        <!-- Flutter metadata -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 
-    <!-- FLUTTER QUERIES (KEPT) -->
+    <!-- Flutter text processing queries -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />

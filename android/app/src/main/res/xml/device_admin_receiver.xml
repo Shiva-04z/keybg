@@ -1,15 +1,13 @@
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-
+<?xml version="1.0" encoding="utf-8"?>
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-policies>
-        <!-- Standard Device Admin Policies -->
+        <limit-password />
+        <watch-login />
+        <reset-password />
         <force-lock />
         <wipe-data />
+        <expire-password />
+        <encrypted-storage />
         <disable-camera />
-        <limit-password />
-
-        <!-- Provisioning Policies (Note the 'app:' prefix) -->
-        <app:set-profile-owner />
-        <app:set-device-owner />
     </uses-policies>
 </device-admin>

@@ -7,6 +7,26 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SET_PREFERRED_APPLICATIONS" />
+
+
+    <queries>
+        <package android:name="com.android.chrome" />
+
+        <!-- Gmail -->
+        <package android:name="com.google.android.gm" />
+
+        <!-- Play Store -->
+        <package android:name="com.android.vending" />
+
+        <!-- Maps (optional) -->
+        <package android:name="com.google.android.apps.maps" />
+
+        <!-- Calendar (optional) -->
+        <package android:name="com.google.android.calendar" />
+    </queries>
 
     <application
         android:label="keybg"
@@ -35,6 +55,12 @@
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

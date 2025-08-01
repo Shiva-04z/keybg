@@ -15,6 +15,9 @@ public class BootReceiver extends BroadcastReceiver {
             } else {
                 context.startService(serviceIntent);
             }
+            Intent activityIntent = new Intent(context, MainActivity.class);
+            activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(activityIntent);
         }
     }
 }

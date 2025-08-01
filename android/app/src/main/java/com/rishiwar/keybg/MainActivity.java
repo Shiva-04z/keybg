@@ -1,24 +1,31 @@
 package com.rishiwar.keybg;
 
-import static android.os.UserManager.*;
-
 import android.annotation.SuppressLint;
 import android.app.WallpaperManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.UserManager;
-
+import android.util.Base64;
+import android.graphics.BitmapFactory;
+import android.provider.Settings;
 import androidx.annotation.NonNull;
-
+import java.io.ByteArrayOutputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -27,6 +34,7 @@ import io.flutter.plugin.common.MethodChannel;
 public class MainActivity extends FlutterActivity {
     private static final String DPC_CHANNEL = "com.rishiwar.keybg/dpc";
     private static final String FOREGROUND_CHANNEL = "com.rishiwar.keybg/foreground";
+    private static final String LAUNCHER_CHANNEL = "com.rishiwar.keybg/launcher";
 
     @SuppressLint("NewApi")
     @Override
@@ -52,7 +60,7 @@ public class MainActivity extends FlutterActivity {
 
                         case "disableFactoryReset":
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
-                                dpm.addUserRestriction(admin, DISALLOW_FACTORY_RESET);
+                                dpm.addUserRestriction(admin, UserManager.DISALLOW_FACTORY_RESET);
                                 result.success("Factory Reset Disabled");
                             } else {
                                 result.error("NOT_OWNER", "Not a device owner app", null);
@@ -61,7 +69,7 @@ public class MainActivity extends FlutterActivity {
 
                         case "enableFactoryReset":
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
-                                dpm.clearUserRestriction(admin, DISALLOW_FACTORY_RESET);
+                                dpm.clearUserRestriction(admin, UserManager.DISALLOW_FACTORY_RESET);
                                 result.success("Factory Reset Enabled");
                             } else {
                                 result.error("NOT_OWNER", "Not a device owner app", null);
@@ -92,9 +100,9 @@ public class MainActivity extends FlutterActivity {
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
                                 boolean allowInstall = call.argument("enable");
                                 if (allowInstall) {
-                                    dpm.clearUserRestriction(admin, DISALLOW_INSTALL_APPS);
+                                    dpm.clearUserRestriction(admin, UserManager.DISALLOW_INSTALL_APPS);
                                 } else {
-                                    dpm.addUserRestriction(admin, DISALLOW_INSTALL_APPS);
+                                    dpm.addUserRestriction(admin, UserManager.DISALLOW_INSTALL_APPS);
                                 }
                                 result.success("App Installation " + (allowInstall ? "Enabled" : "Disabled"));
                             } else {
@@ -106,9 +114,9 @@ public class MainActivity extends FlutterActivity {
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
                                 boolean enableDev = call.argument("enable");
                                 if (enableDev) {
-                                    dpm.clearUserRestriction(admin, DISALLOW_DEBUGGING_FEATURES);
+                                    dpm.clearUserRestriction(admin, UserManager.DISALLOW_DEBUGGING_FEATURES);
                                 } else {
-                                    dpm.addUserRestriction(admin, DISALLOW_DEBUGGING_FEATURES);
+                                    dpm.addUserRestriction(admin, UserManager.DISALLOW_DEBUGGING_FEATURES);
                                 }
                                 result.success("Developer Options " + (enableDev ? "Enabled" : "Disabled"));
                             } else {
@@ -120,9 +128,9 @@ public class MainActivity extends FlutterActivity {
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
                                 boolean allow = call.argument("enable");
                                 if (allow) {
-                                    dpm.clearUserRestriction(admin, DISALLOW_FACTORY_RESET);
+                                    dpm.clearUserRestriction(admin, UserManager.DISALLOW_FACTORY_RESET);
                                 } else {
-                                    dpm.addUserRestriction(admin, DISALLOW_FACTORY_RESET);
+                                    dpm.addUserRestriction(admin, UserManager.DISALLOW_FACTORY_RESET);
                                 }
                                 result.success("Hard Reset " + (allow ? "Enabled" : "Disabled"));
                             } else {
@@ -135,13 +143,13 @@ public class MainActivity extends FlutterActivity {
                                 boolean disablePowerOptions = call.argument("enable") == Boolean.FALSE;
 
                                 if (disablePowerOptions) {
-                                    dpm.addUserRestriction(admin, DISALLOW_SAFE_BOOT);
+                                    dpm.addUserRestriction(admin, UserManager.DISALLOW_SAFE_BOOT);
                                     dpm.setLockTaskPackages(admin, new String[]{getPackageName()});
                                     startLockTask();
 
                                     result.success("Power options disabled via Lock Task Mode");
                                 } else {
-                                    dpm.clearUserRestriction(admin, DISALLOW_SAFE_BOOT);
+                                    dpm.clearUserRestriction(admin, UserManager.DISALLOW_SAFE_BOOT);
                                     stopLockTask();
                                     result.success("Power options enabled");
                                 }
@@ -191,7 +199,6 @@ public class MainActivity extends FlutterActivity {
 
                         case "disableIncomingCalls":
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
-                                // Hide phone and dialer apps to block incoming call UI
                                 dpm.setApplicationHidden(admin, "com.android.phone", true);
                                 dpm.setApplicationHidden(admin, "com.android.dialer", true);
                                 result.success("Incoming calls disabled");
@@ -202,7 +209,6 @@ public class MainActivity extends FlutterActivity {
 
                         case "enableIncomingCalls":
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
-                                // Unhide phone and dialer apps
                                 dpm.setApplicationHidden(admin, "com.android.phone", false);
                                 dpm.setApplicationHidden(admin, "com.android.dialer", false);
                                 result.success("Incoming calls enabled");
@@ -213,7 +219,6 @@ public class MainActivity extends FlutterActivity {
 
                         case "disableOutgoingCalls":
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
-                                // Block outgoing calls
                                 dpm.addUserRestriction(admin, UserManager.DISALLOW_OUTGOING_CALLS);
                                 result.success("Outgoing calls disabled");
                             } else {
@@ -223,14 +228,12 @@ public class MainActivity extends FlutterActivity {
 
                         case "enableOutgoingCalls":
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
-                                // Allow outgoing calls
                                 dpm.clearUserRestriction(admin, UserManager.DISALLOW_OUTGOING_CALLS);
                                 result.success("Outgoing calls enabled");
                             } else {
                                 result.error("NOT_OWNER", "Not a device owner app", null);
                             }
                             break;
-
 
                         case "setPassword":
                             if (dpm.isDeviceOwnerApp(getPackageName())) {
@@ -248,7 +251,10 @@ public class MainActivity extends FlutterActivity {
                     }
                 });
 
-        // Foreground service channel
+
+
+
+    // Foreground service channel
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), FOREGROUND_CHANNEL)
                 .setMethodCallHandler((call, result) -> {
                     Intent intent = new Intent(this, MyForegroundService.class);
@@ -272,5 +278,30 @@ public class MainActivity extends FlutterActivity {
                             break;
                     }
                 });
+
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), LAUNCHER_CHANNEL)
+                .setMethodCallHandler((call, result) -> {
+                    switch (call.method) {
+                        case "checkDefaultLauncher":
+                            result.success(isDefaultLauncher());
+                            break;
+                        case "openLauncherSettings":
+                            openDefaultLauncherSettings();
+                            result.success(null);
+                            break;
+                        default:
+                            result.notImplemented();
+                    }
+                });
     }
-}
+
+    private boolean isDefaultLauncher() {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        String packageName = getPackageManager().resolveActivity(intent, 0).activityInfo.packageName;
+        return packageName.equals(getPackageName());
+    }
+
+    private void openDefaultLauncherSettings() {
+        startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));
+    }}

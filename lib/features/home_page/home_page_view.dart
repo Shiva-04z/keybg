@@ -32,7 +32,7 @@ class HomePageView extends GetView<HomePageController> {
             IconButton(
               icon: Icon(Icons.fullscreen),
               onPressed: () {
-                Get.toNamed(RoutesConstant.testPage);
+                controller.toggleKiosk();
                  },
             ),
           ],

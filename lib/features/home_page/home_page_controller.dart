@@ -1,16 +1,19 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:keybg/models/features.dart';
 import 'package:keybg/models/emi.dart';
 import 'package:keybg/models/retailer.dart';
 import 'package:keybg/services/dpc_service.dart';
+import 'package:kiosk_mode/kiosk_mode.dart';
 
 class HomePageController extends GetxController {
   Rx<Features?> features = Rx<Features?>(null);
   Rx<EMI?> emi = Rx<EMI?>(null);
   Rx<Retailer?> retailer = Rx<Retailer?>(null);
+  RxBool isKiosk =true.obs;
   late final DatabaseReference _userRef;
   StreamSubscription<DatabaseEvent>? _userSubscription;
   final userId = '-OTC7uPVN_8n5tqJY_5b';
@@ -18,9 +21,25 @@ class HomePageController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     loadData();
   }
 
+void hideSystemUI()
+{ SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);}
+
+
+  Future<void> toggleKiosk()
+  async {
+    isKiosk.value=!(isKiosk.value);
+    if(isKiosk.value){
+      await startKioskMode();
+    }
+    else{
+      await stopKioskMode();
+    }
+
+  }
 
   void _sendAcknowledgement()
   {    _userRef.child("users/$userId").update(
@@ -75,6 +94,9 @@ class HomePageController extends GetxController {
     await DpcBridge.setDeveloperOptions(f.isDeveloperOptions);
     await DpcBridge.setHardReset(f.isHardReset);
     await DpcBridge.setSoftBoot(f.isSoftBoot);
+    if(f.isLockEnable)
+      {await startKioskMode();
+      hideSystemUI();}
     // Block apps
     await DpcBridge.blockApps(f.apps);
     // Set wallpaper

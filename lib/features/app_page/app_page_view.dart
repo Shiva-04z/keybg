@@ -4,9 +4,14 @@ import 'package:get/get.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:keybg/features/app_page/app_page_controller.dart';
+import 'package:keybg/naviagtion/RoutesConstant.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import '../../core/globals.dart' as glb;
 
 class AppPageView extends GetView<AppDeviceController> {
   final TextEditingController _wallpaperUrlController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -14,27 +19,22 @@ class AppPageView extends GetView<AppDeviceController> {
       final bool showTabs = controller.showHiddenApps.value;
 
       final appBar = AppBar(
-        title: Obx(() => Text(
-          'App Manager',
-          style: TextStyle(
-            fontSize: controller.appBarFontSize.value,
-            color: controller.appBarTextColor.value,
-          ),
-        )),
-        backgroundColor: controller.appBarColor.value,
-        elevation: 4,
-
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+          leading: IconButton(onPressed: (){Get.offNamed(RoutesConstant.myHomePage);}, icon: Icon(Icons.arrow_back,color: Colors.white,)),
         actions: [
+
           IconButton(
             icon: Icon(Icons.settings, color: Colors.white),
             onPressed: _showUiSettingsDialog,
           ),
+          IconButton(onPressed: (){controller.loadInstalledApps();}, icon: Icon(Icons.refresh,color: Colors.white,))
         ],
         bottom: showTabs
             ? TabBar(
           tabs: [
             Tab(text: 'All Apps'),
-            Tab(text: 'Hidden Apps (${controller.hiddenApps.length})'),
+            Tab(text: 'Hidden Apps (${glb.hiddenApps.length})'),
           ],
           labelColor: controller.appBarTextColor.value,
           unselectedLabelColor:
@@ -49,9 +49,11 @@ class AppPageView extends GetView<AppDeviceController> {
           length: 2,
           child: Scaffold(
             appBar: appBar,
-            backgroundColor: Colors.grey[900],
+            backgroundColor: Colors.grey.shade700,
+            extendBodyBehindAppBar: true,
             body: TabBarView(
               children: [
+
                 _buildAllAppsTab(),
                 _buildHiddenAppsTab(),
               ],
@@ -72,11 +74,11 @@ class AppPageView extends GetView<AppDeviceController> {
   Widget _buildAllAppsTab() {
     return Stack(
       children: [
-        Obx(() => controller.wallpaperPath.isNotEmpty
+        Obx(() => glb.wallpaperPath.isNotEmpty
             ? Container(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: FileImage(File(controller.wallpaperPath.value)),
+              image: FileImage(File(glb.wallpaperPath.value)),
               fit: BoxFit.cover,
             ),
           ),
@@ -91,7 +93,7 @@ class AppPageView extends GetView<AppDeviceController> {
         ),
         Column(
           children: [
-            SizedBox(height: 50,),
+            (controller.showHiddenApps.value)?SizedBox(height: 120,):  SizedBox(height: 50,),
             Obx(() => controller.showSearchBar.value
                 ? Padding(
               padding: const EdgeInsets.all(16.0),
@@ -118,7 +120,11 @@ class AppPageView extends GetView<AppDeviceController> {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child:
+                  LoadingAnimationWidget.staggeredDotsWave(
+                    color: Colors.white,
+                    size: 50,
+                  ),);
                 }
                 return _buildAppGrid(controller.filteredApps);
               }),
@@ -131,7 +137,7 @@ class AppPageView extends GetView<AppDeviceController> {
 
   Widget _buildHiddenAppsTab() {
     return Obx(() {
-      if (controller.hiddenApps.isEmpty) {
+      if (glb.hiddenApps.isEmpty) {
         return Center(
           child: Text(
             'No hidden apps',
@@ -140,11 +146,11 @@ class AppPageView extends GetView<AppDeviceController> {
         );
       }
       return ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: controller.hiddenApps.length,
+        padding: EdgeInsets.only(left: 16,right: 16,top: 120,bottom: 16),
+        itemCount: glb.hiddenApps.length,
         itemBuilder: (context, index) {
-          final packageName = controller.hiddenApps[index];
-          final app = controller.apps
+          final packageName = glb.hiddenApps[index];
+          final app = glb.apps
               .firstWhere((app) => app.packageName == packageName);
           return Card(
             color: Colors.grey[800],
@@ -185,21 +191,21 @@ class AppPageView extends GetView<AppDeviceController> {
   }
 
   Widget _buildAppGrid(List<AppInfo> apps) {
+    apps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     if (apps.isEmpty) {
+      controller.loadInstalledApps();
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.white),
-            Text(
-              'No apps found',
-              style: TextStyle(fontSize: 18, color: Colors.white),
-            ),
-            SizedBox(height: 8),
-            TextButton(
-              onPressed: () => controller.loadInstalledApps(),
-              child: Text('Retry', style: TextStyle(color: Colors.blue)),
-            ),
+        LoadingAnimationWidget.staggeredDotsWave(
+          color: Colors.white,
+          size: 50,
+        ),
+
+
+
+
           ],
         ),
       );
@@ -220,7 +226,7 @@ class AppPageView extends GetView<AppDeviceController> {
   }
 
   Widget _buildAppItem(AppInfo app) {
-    final isHidden = controller.hiddenApps.contains(app.packageName);
+    final isHidden = glb.hiddenApps.contains(app.packageName);
 
     return GestureDetector(
       onTap: () => controller.launchApp(app.packageName),
@@ -280,7 +286,7 @@ class AppPageView extends GetView<AppDeviceController> {
   }
 
   void _showAppOptions(AppInfo app) {
-    final isHidden = controller.hiddenApps.contains(app.packageName);
+    final isHidden = glb.hiddenApps.contains(app.packageName);
 
     Get.bottomSheet(
       Container(
@@ -382,27 +388,16 @@ class AppPageView extends GetView<AppDeviceController> {
                     ],
                   ),
                   ExpansionTile(
-                    title: Text('App Bar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    title: Text('Theme', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     leading: Icon(Icons.view_day_outlined, color: Colors.white),
                     childrenPadding: const EdgeInsets.all(16),
                     children: [
                       _buildMaterialColorSelector(
-                        'Bar Color',
+                        'Theme Color',
                         controller.appBarColor.value,
                             (c) => controller.appBarColor.value = c,
                       ),
-                      _buildColorSelector(
-                        'Text Color',
-                        controller.appBarTextColor.value,
-                            (c) => controller.appBarTextColor.value = c,
-                      ),
-                      _buildSettingsSlider(
-                        title: 'Font Size',
-                        value: controller.appBarFontSize.value,
-                        min: 16, max: 24, divisions: 8,
-                        label: controller.appBarFontSize.value.round().toString(),
-                        onChanged: (v) => controller.appBarFontSize.value = v,
-                      ),
+
                     ],
                   ),
                   ExpansionTile(
@@ -458,6 +453,26 @@ class AppPageView extends GetView<AppDeviceController> {
           ),
         ),
         actions: [
+          (controller.userId.value =="")?Column(
+            children: [
+              TextButton(
+                onPressed: () {
+                  Get.back(); // Close the settings dialog
+                  controller.openLauncherSettings(); // Call the new method
+                },
+                child: Text('Set Launcher', style: TextStyle(color: Colors.cyan)),
+              ),
+              SizedBox(width: 10,),
+              TextButton(
+                onPressed: () {
+                  Get.back(); // Close the settings dialog
+                  controller.registerDevice(); // Call the new method
+                },
+                child: Text('Enroll Device', style: TextStyle(color: Colors.cyan)),
+              ),
+              SizedBox(width: 10,),
+            ],
+          ): Container(),
           TextButton(
             onPressed: () {
               controller.resetUiSettings();
@@ -465,10 +480,12 @@ class AppPageView extends GetView<AppDeviceController> {
             },
             child: Text('Reset', style: TextStyle(color: Colors.amber)),
           ),
+    SizedBox(width: 10),
           TextButton(
             onPressed: () => Get.back(),
             child: Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
+          SizedBox(width: 4),
         ],
       ),
     );
@@ -613,6 +630,7 @@ class AppPageView extends GetView<AppDeviceController> {
             onPressed: () => Get.back(),
             child: Text('Cancel', style: TextStyle(color: Colors.white)),
           ),
+
           TextButton(
             onPressed: () async {
               final url = _wallpaperUrlController.text.trim();

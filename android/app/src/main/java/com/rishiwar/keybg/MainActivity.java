@@ -49,6 +49,49 @@ public class MainActivity extends FlutterActivity {
                     Context context = this;
 
                     switch (call.method) {
+                        case "activateAdmin":
+                            try {
+                                android.util.Log.d("DPC_DEBUG", "Requesting Device Admin...");
+
+                                // Log current package
+                                android.util.Log.d("DPC_DEBUG", "Package: " + getPackageName());
+
+                                // Log if admin receiver is declared
+                                boolean receiverExists;
+                                try {
+                                    getPackageManager().getReceiverInfo(admin, PackageManager.GET_META_DATA);
+                                    receiverExists = true;
+                                } catch (PackageManager.NameNotFoundException e) {
+                                    receiverExists = false;
+                                }
+                                android.util.Log.d("DPC_DEBUG", "Admin Receiver registered: " + receiverExists);
+
+                                // Log current user
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                                    android.os.UserHandle userHandle = android.os.Process.myUserHandle();
+                                    android.util.Log.d("DPC_DEBUG", "UserHandle: " + userHandle.toString());
+                                }
+
+                                // Build intent
+                                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+                                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, admin);
+                                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                                        "Please grant Device Admin permission so this app can manage security policies.");
+                                startActivity(intent);
+
+                                result.success("Requested Device Admin activation");
+                            } catch (Exception e) {
+                                android.util.Log.e("DPC_DEBUG", "Error requesting Device Admin", e);
+                                result.error("ADMIN_ERROR", e.getMessage(), null);
+                            }
+                            break;
+
+
+                        case "isAdminActive":
+                            boolean isActive = dpm.isAdminActive(admin);
+                            result.success(isActive);
+                            break;
+
                         case "lockDevice":
                             if (dpm.isAdminActive(admin)) {
                                 dpm.lockNow();

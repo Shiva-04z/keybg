@@ -28,8 +28,6 @@ void main() async {
   // ✅ Open boxes for apps and settings
   await Hive.openBox<CachedAppInfo>('apps');
   await Hive.openBox('settings');
-  Get.put(AppDeviceController());
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
@@ -38,6 +36,9 @@ void main() async {
         statusBarColor: Colors.transparent, // optional
         statusBarIconBrightness: Brightness.dark, // or light
       ));
+
+
+
   runApp(const MyApp());
 }
 

@@ -157,4 +157,19 @@ class DpcBridge {
       return null;
     }
   }
+
+  static Future<String?> activateAdmin() async {
+    try {
+      print("Activating");
+      return await _channel.invokeMethod('activateAdmin');
+    } catch (e) {
+      print('Error activating admin: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> isAdminActive() async {
+    final bool active = await _channel.invokeMethod("isAdminActive");
+    return active;
+  }
 }

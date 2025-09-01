@@ -6,8 +6,10 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:keybg/models/features.dart';
 import 'package:keybg/models/emi.dart';
 import 'package:keybg/models/retailer.dart';
+import 'package:keybg/naviagtion/RoutesConstant.dart';
 import 'package:keybg/services/dpc_service.dart';
 import 'package:kiosk_mode/kiosk_mode.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePageController extends GetxController {
   Rx<Features?> features = Rx<Features?>(null);
@@ -16,17 +18,64 @@ class HomePageController extends GetxController {
   RxBool isKiosk =true.obs;
   late final DatabaseReference _userRef;
   StreamSubscription<DatabaseEvent>? _userSubscription;
-  final userId = '-OTC7uPVN_8n5tqJY_5b';
+  RxString userId = "pranav/1BsF11LTiaPu8jQIzDHa".obs;
+  RxString unlockCode = "ABC123".obs;
 
   @override
   void onInit() {
     super.onInit();
+    _getUserId();
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    loadData();
+  }
+
+  _getUserId()
+  async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if(prefs.getString("userId")!=null)
+    {
+      userId.value = prefs.getString("userId")!;
+      print("User Loaded ${prefs.getString("userId")!}");
+      loadData();
+      _listenToLockService();
+
+    }
   }
 
 void hideSystemUI()
 { SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);}
+
+
+
+  void _listenToLockService()
+  {
+    print("Lock Service Init");
+    final sessionRef = FirebaseDatabase.instance.ref("users/${userId.value}/features/isLockEnable");
+    sessionRef.onValue.listen((DatabaseEvent event) async {
+      final data = event.snapshot.value;
+      print("Lock status updated: $data");
+      if(data == false)
+      {
+        final sessions2Ref = FirebaseDatabase.instance.ref("users/${userId.value}").update({"Status": "UnLocked"});
+        Get.offAllNamed(RoutesConstant.myHomePage);
+        await stopKioskMode();
+      }
+    });
+  }
+
+
+  Future<void> pushUnlockMode()
+  async {
+
+
+    Get.offAllNamed(RoutesConstant.myHomePage);
+    final sessionRef = FirebaseDatabase.instance.ref("users/$userId/features");
+    sessionRef.update({"isLockEnable":false});
+    final sessions2Ref = FirebaseDatabase.instance.ref("users/$userId").update({"Status": "UnLocked"});
+    await stopKioskMode();
+
+  }
 
 
   Future<void> toggleKiosk()
@@ -37,24 +86,23 @@ void hideSystemUI()
     }
     else{
       await stopKioskMode();
+      Get.offAllNamed(RoutesConstant.appPage);
     }
 
   }
 
-  void _sendAcknowledgement()
-  {    _userRef.child("users/$userId").update(
-      {"Acknowledgement" : DateTime.now()}
-    );
-  }
+
 
   void loadData() {
 
     _userRef = FirebaseDatabase.instance.ref('users/$userId');
+    print(userId.value);
 
     _userSubscription = _userRef.onValue.listen(
       (event) {
         if (event.snapshot.exists) {
           final data = event.snapshot.value as Map?;
+          print(data);
           if (data != null) {
             if (data['features'] != null) {
               features.value = Features.fromJson(
@@ -62,7 +110,6 @@ void hideSystemUI()
               );
               print(features.value);
               applyRestrictions();
-              _sendAcknowledgement();
             }
             if (data['emi'] != null) {
               print(data['emi']);

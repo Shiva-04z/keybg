@@ -13,7 +13,7 @@ class SplashScreenController extends GetxController {
   void onReady() async {
     // TODO: implement onReady
 
-    Get.offAllNamed(RoutesConstant.appPage);
+    Get.offAllNamed(RoutesConstant.myHomePage);
   }
 
 

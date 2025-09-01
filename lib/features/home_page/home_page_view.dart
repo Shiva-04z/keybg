@@ -4,6 +4,8 @@ import 'package:keybg/features/home_page/home_page_controller.dart';
 import 'package:keybg/models/features.dart';
 import 'package:keybg/naviagtion/RoutesConstant.dart';
 import 'package:keybg/services/dpc_service.dart';
+import 'package:kiosk_mode/kiosk_mode.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class HomePageView extends GetView<HomePageController> {
   @override
@@ -117,12 +119,13 @@ class HomePageView extends GetView<HomePageController> {
                         title: Text('QR Code'),
                         subtitle: Text('Make Payment via this QR'),
                         children: [
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
+
                           Obx(
-                            () => Center(
+                                () => Center(
                               child: Text(
-                                " To Pay: ${controller.emi.value?.paymentAmount}",
-                                style: TextStyle(
+                                "To Pay: ₹${controller.emi.value?.paymentAmount}",
+                                style: const TextStyle(
                                   color: Colors.blue,
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
@@ -130,20 +133,37 @@ class HomePageView extends GetView<HomePageController> {
                               ),
                             ),
                           ),
-                          Container(
-                            height: 300,
-                            width: 200,
 
-                            child: Image(image: NetworkImage(retailer.qrUrl)),
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(16),
-                              ),
-                            ),
+                          const SizedBox(height: 10),
+
+                          Obx(
+                                () {
+                              final amount = controller.emi.value?.paymentAmount?.toStringAsFixed(2) ?? "0.00";
+                              final upiId = retailer.qrUrl; // example: "xyz@upi"
+                              final payeeName = Uri.encodeComponent(retailer.shopName); // Encode spaces/special characters
+
+                              final qrData = "upi://pay?pa=$upiId&pn=$payeeName&am=$amount&cu=INR";
+
+                              return Container(
+                                height: 300,
+                                width: 300,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.all(Radius.circular(16)),
+                                  border: Border.all(color: Colors.blueAccent),
+                                ),
+                                child: QrImageView(
+                                  data: qrData,
+                                  version: QrVersions.auto,
+                                  size: 250,
+                                  backgroundColor: Colors.white,
+                                ),
+                              );
+                            },
                           ),
                         ],
-                      ),
+                      )
+
                     ),
                   ],
                 ),
@@ -383,7 +403,6 @@ class HomePageView extends GetView<HomePageController> {
                 child: TextField(
                   controller: pinControllers[index],
                   maxLength: 1,
-                  keyboardType: TextInputType.number,
                   obscureText: true,
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -417,7 +436,7 @@ class HomePageView extends GetView<HomePageController> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton.icon(
-                onPressed: () {
+                onPressed: (){
                   final enteredPin =
                       pinControllers
                           .map((controller) => controller.text)
@@ -425,11 +444,15 @@ class HomePageView extends GetView<HomePageController> {
                   if (enteredPin.length == 6) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Processing payment...'),
+                        content: Text('Processing Unlock...'),
                         duration: Duration(seconds: 2),
                       ),
+
                     );
                     // Process payment here
+                    if(enteredPin  == controller.unlockCode.value){
+                      controller.pushUnlockMode();
+                    }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

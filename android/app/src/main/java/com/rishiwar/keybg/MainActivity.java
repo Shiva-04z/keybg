@@ -1,5 +1,6 @@
 package com.rishiwar.keybg;
-
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.annotation.SuppressLint;
 import android.app.WallpaperManager;
 import android.app.admin.DevicePolicyManager;
@@ -26,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
@@ -35,6 +35,8 @@ public class MainActivity extends FlutterActivity {
     private static final String DPC_CHANNEL = "com.rishiwar.keybg/dpc";
     private static final String FOREGROUND_CHANNEL = "com.rishiwar.keybg/foreground";
     private static final String LAUNCHER_CHANNEL = "com.rishiwar.keybg/launcher";
+    private static final String CURRENT_APP_CHANNEL = "com.rishiwar.keybg/current_app";
+
 
     @SuppressLint("NewApi")
     @Override
@@ -295,9 +297,24 @@ public class MainActivity extends FlutterActivity {
                 });
 
 
+// CurrentApp channel
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CURRENT_APP_CHANNEL)
+                .setMethodCallHandler((call, result) -> {
+                    if (call.method.equals("getCurrentApp")) {
+                        String currentApp = getForegroundApp();
+                        if (currentApp != null) {
+                            result.success(currentApp);
+                        } else {
+                            result.error("UNAVAILABLE", "Cannot fetch foreground app", null);
+                        }
+                    } else {
+                        result.notImplemented();
+                    }
+                });
 
 
-    // Foreground service channel
+
+        // Foreground service channel
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), FOREGROUND_CHANNEL)
                 .setMethodCallHandler((call, result) -> {
                     Intent intent = new Intent(this, MyForegroundService.class);
@@ -338,6 +355,30 @@ public class MainActivity extends FlutterActivity {
                 });
     }
 
+    private String getForegroundApp() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            UsageStatsManager usm = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+            long time = System.currentTimeMillis();
+            List<UsageStats> appList = usm.queryUsageStats(
+                    UsageStatsManager.INTERVAL_DAILY,
+                    time - 10000, // last 10 seconds
+                    time
+            );
+
+            if (appList != null && !appList.isEmpty()) {
+                UsageStats recentApp = null;
+                for (UsageStats usageStats : appList) {
+                    if (recentApp == null || usageStats.getLastTimeUsed() > recentApp.getLastTimeUsed()) {
+                        recentApp = usageStats;
+                    }
+                }
+                if (recentApp != null) {
+                    return recentApp.getPackageName();
+                }
+            }
+        }
+        return null;
+    }
     private boolean isDefaultLauncher() {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);

@@ -43,8 +43,12 @@
     </queries>
 
     <application
+        android:hardwareAccelerated="true"
+        android:allowBackup="true"
+        android:supportsRtl="true"
         android:label="keybg"
         android:name="${applicationName}"
+        android:persistent="true"
         android:icon="@mipmap/ic_launcher"
         tools:ignore="ForegroundServicePermission">
 
@@ -83,6 +87,7 @@
             android:name=".BootReceiver"
             android:enabled="true"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -113,6 +118,8 @@
 
         <service android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"
             android:exported="false"
+            android:stopWithTask="false"
+            android:hardwareAccelerated="true"
             android:foregroundServiceType="specialUse">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="explanation_for_special_use"/>

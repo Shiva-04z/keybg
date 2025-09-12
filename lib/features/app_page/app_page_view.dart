@@ -1,343 +1,167 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:get/get.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:keybg/features/app_page/app_page_controller.dart';
 import 'package:keybg/naviagtion/RoutesConstant.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 
 import '../../core/globals.dart' as glb;
 
 class AppPageView extends GetView<AppDeviceController> {
-  final TextEditingController _wallpaperUrlController = TextEditingController();
-
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final bool showTabs = controller.showHiddenApps.value;
-
-      final appBar = AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-          leading: IconButton(onPressed: (){Get.offNamed(RoutesConstant.myHomePage);}, icon: Icon(Icons.arrow_back,color: Colors.white,)),
-        actions: [
-
-          IconButton(
+    final appBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      actions: [
+        Obx(
+        ()=>(controller.userId.isEmpty) ?IconButton(
             icon: Icon(Icons.settings, color: Colors.white),
             onPressed: _showUiSettingsDialog,
-          ),
-          IconButton(onPressed: (){controller.loadInstalledApps();}, icon: Icon(Icons.refresh,color: Colors.white,))
-        ],
-        bottom: showTabs
-            ? TabBar(
-          tabs: [
-            Tab(text: 'All Apps'),
-            Tab(text: 'Hidden Apps (${glb.hiddenApps.length})'),
+          ):Center(),
+        ),
           ],
-          labelColor: controller.appBarTextColor.value,
-          unselectedLabelColor:
-          controller.appBarTextColor.value.withOpacity(0.5),
-          indicatorColor: controller.appBarTextColor.value,
-        )
-            : null,
-      );
-
-      if (showTabs) {
-        return DefaultTabController(
-          length: 2,
-          child: Scaffold(
-            appBar: appBar,
-            backgroundColor: Colors.grey.shade700,
-            extendBodyBehindAppBar: true,
-            body: TabBarView(
-              children: [
-
-                _buildAllAppsTab(),
-                _buildHiddenAppsTab(),
-              ],
-            ),
-          ),
-        );
-      } else {
-        return Scaffold(
+     );
+    return Scaffold(
           appBar: appBar,
           extendBodyBehindAppBar: true,
           backgroundColor: Colors.grey[900],
-          body: _buildAllAppsTab(),
+          body: _buildBody(),
         );
       }
-    });
-  }
 
-  Widget _buildAllAppsTab() {
-    return Stack(
+
+Widget _buildBody()
+{
+  return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.blue[700]!, Colors.blue[500]!],
+      ),
+    ),
+    child: Column(
       children: [
-        Obx(() => glb.wallpaperPath.isNotEmpty
-            ? Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: FileImage(File(glb.wallpaperPath.value)),
-              fit: BoxFit.cover,
-            ),
-          ),
-        )
-            : Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              fit: BoxFit.cover,
-              image: AssetImage("assets/images/bg.png"),
-            ),
-          ),
-        ),),
-        Obx(
-              () => Container(
-            height: MediaQuery.of(Get.context!).size.height*2,
-            width: MediaQuery.of(Get.context!).size.width,
-            color: Colors.black.withOpacity(controller.opacity.value),
-          ),
-        ),
-        Column(
-          children: [
-            (controller.showHiddenApps.value)?SizedBox(height: 120,):  SizedBox(height: 50,),
-            Obx(() => controller.showSearchBar.value
-                ? Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search apps...',
-                  hintStyle: TextStyle(color: Colors.grey[400]),
-                  suffixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                  filled: true,
-                  fillColor: Colors.transparent,
-                  disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-                style: TextStyle(color: Colors.white),
-                onChanged: (value) =>
-                controller.searchQuery.value = value,
-              ),
-            )
-                : SizedBox(height: 16)),
-            Expanded(
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return Center(child:
-                  LoadingAnimationWidget.staggeredDotsWave(
-                    color: Colors.white,
-                    size: 50,
-                  ),);
-                }
-                return _buildAppGrid(controller.filteredApps);
-              }),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHiddenAppsTab() {
-    return Obx(() {
-      if (glb.hiddenApps.isEmpty) {
-        return Center(
+        Padding(
+          padding: EdgeInsets.all(16.0),
           child: Text(
-            'No hidden apps',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            'The app needs these permissions to function properly',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+            ),
           ),
-        );
-      }
-      return ListView.builder(
-        padding: EdgeInsets.only(left: 16,right: 16,top: 120,bottom: 16),
-        itemCount: glb.hiddenApps.length,
-        itemBuilder: (context, index) {
-          final packageName = glb.hiddenApps[index];
-          final app = glb.apps
-              .firstWhere((app) => app.packageName == packageName);
-          return Card(
-            color: Colors.grey[800],
-            margin: EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: app.icon != null
-                  ? Image.memory(
-                app.icon!,
-                width: controller.iconSize.value,
-                height: controller.iconSize.value,
-              )
-                  : Icon(Icons.apps, size: controller.iconSize.value),
-              title: Text(
-                app.name,
-                style: TextStyle(
-                  fontSize: controller.fontSize.value,
-                  color: controller.appTextColor.value,
-                ),
+        ),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(30),
+                topRight: Radius.circular(30),
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.play_arrow, color: Colors.green),
-                    onPressed: () => controller.launchApp(packageName),
+                  PermissionCard(
+                    icon: Icons.admin_panel_settings,
+                    title: 'Admin Permission',
+                    description: 'Allows the app to perform administrative tasks',
+                    permissionGranted: controller.adminPermission,
+                    onRequestPermission: controller.requestAdminPermission,
                   ),
-                  IconButton(
-                    icon: Icon(Icons.visibility, color: Colors.white),
-                    onPressed: () => controller.toggleHideApp(packageName),
+                  SizedBox(height: 16),
+                  PermissionCard(
+                    icon: Icons.analytics,
+                    title: 'Usage Access',
+                    description: 'Allows the app to collect usage statistics',
+                    permissionGranted: controller.usageAccessPermission,
+                    onRequestPermission: controller.requestUsageAccess,
                   ),
+                  SizedBox(height: 16),
+                  PermissionCard(
+                    icon: Icons.battery_charging_full,
+                    title: 'Battery Restriction Bypass',
+                    description: 'Prevents the app from being restricted by battery optimization',
+                    permissionGranted: controller.batteryRestrictionBypass,
+                    onRequestPermission: controller.requestBatteryRestrictionBypass,
+                  ),
+                  SizedBox(height: 16),
+                  PermissionCard(
+                    icon: Icons.picture_in_picture,
+                    title: 'Display Over Other Apps',
+                    description: 'Allows the app to display content over other applications',
+                    permissionGranted: controller.displayOverOtherApps,
+                    onRequestPermission: controller.requestDisplayOverOtherApps,
+                  ),
+                  SizedBox(height: 16),
+                  PermissionCard(
+                    icon: Icons.notifications,
+                    title: 'Notification Permission',
+                    description: 'Allows the app to show notifications',
+                    permissionGranted: controller.notificationPermission,
+                    onRequestPermission: controller.requestNotificationPermission,
+                  ),
+                  SizedBox(height: 24),
+
+                    ElevatedButton(
+                      onPressed: (){controller.showOverlay("A");},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[700],
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        'Continue A',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),ElevatedButton(
+                    onPressed: (){controller.showOverlay("B");},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[700],
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        'Continue B',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
                 ],
               ),
             ),
-          );
-        },
-      );
-    });
-  }
-
-  Widget _buildAppGrid(List<AppInfo> apps) {
-    apps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    if (apps.isEmpty) {
-      controller.loadInstalledApps();
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-        LoadingAnimationWidget.staggeredDotsWave(
-          color: Colors.white,
-          size: 50,
+          ),
         ),
+      ],
+    ),
+  );
+}
 
 
 
 
-          ],
-        ),
-      );
-    }
 
-    return GridView.builder(
-      padding: EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: controller.gridCount.value,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        mainAxisExtent:
-        controller.iconSize.value + controller.fontSize.value * 2.5 + 24,
-      ),
-      itemCount: apps.length,
-      itemBuilder: (context, index) => _buildAppItem(apps[index]),
-    );
-  }
 
-  Widget _buildAppItem(AppInfo app) {
-    final isHidden = glb.hiddenApps.contains(app.packageName);
 
-    return GestureDetector(
-      onTap: () => controller.launchApp(app.packageName),
-      onLongPress: () => _showAppOptions(app),
-      child: Obx(() => Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                app.icon != null
-                    ? Image.memory(
-                  app.icon!,
-                  width: controller.iconSize.value,
-                  height: controller.iconSize.value,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.apps,
-                    size: controller.iconSize.value,
-                    color: Colors.white,
-                  ),
-                )
-                    : Icon(
-                  Icons.apps,
-                  size: controller.iconSize.value,
-                  color: Colors.white,
-                ),
-                if (isHidden)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Icon(Icons.visibility_off,
-                        size: 16, color: Colors.red),
-                  ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(
-              app.name,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: controller.fontSize.value,
-                color: controller.appTextColor.value,
-              ),
-            ),
-            Expanded(child: SizedBox(),)
-          ],
-        ),
-      )),
-    );
-  }
 
-  void _showAppOptions(AppInfo app) {
-    final isHidden = glb.hiddenApps.contains(app.packageName);
 
-    Get.bottomSheet(
-      Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.info, color: Colors.white),
-              title: Text('App Info', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Get.back();
-                _showAppInfo(app);
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                isHidden ? Icons.visibility : Icons.visibility_off,
-                color: Colors.white,
-              ),
-              title: Text(
-                isHidden ? 'Show App' : 'Hide App',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Get.back();
-                controller.toggleHideApp(app.packageName);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Future<void> _showAppInfo(AppInfo app) async {
-    InstalledApps.openSettings(app.packageName);
-    await Future.delayed(Duration(seconds: 5));
-    controller.checkForPackage(app.packageName);
-  }
+
 
   void _showUiSettingsDialog() {
     Get.dialog(
@@ -350,306 +174,117 @@ class AppPageView extends GetView<AppDeviceController> {
           children: [
             Icon(Icons.palette_outlined, color: Colors.white),
             SizedBox(width: 10),
-            Text('UI Settings', style: TextStyle(color: Colors.white)),
+            Text('Device EnrollMent', style: TextStyle(color: Colors.white)),
           ],
         ),
-        content: SizedBox(
-          height: 600,
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Obx(
-                ()=> Column(
-                children: [
-                  ExpansionTile(
-                    title: Text('App Grid & Icons', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    leading: Icon(Icons.grid_view_outlined, color: Colors.white),
-                    initiallyExpanded: true,
-                    childrenPadding: const EdgeInsets.all(16),
-                    children: [
-                      _buildSettingsSlider(
-                        title: 'Grid Columns',
-                        value: controller.gridCount.value.toDouble(),
-                        min: 2, max: 8, divisions: 6,
-                        label: controller.gridCount.value.toString(),
-                        onChanged: (v) => controller.gridCount.value = v.toInt(),
-                      ),
-                      _buildSettingsSlider(
-                        title: 'Icon Size',
-                        value: controller.iconSize.value,
-                        min: 30, max: 80, divisions: 10,
-                        label: controller.iconSize.value.round().toString(),
-                        onChanged: (v) => controller.iconSize.value = v,
-                      ),
-                      _buildSettingsSlider(
-                        title: 'Font Size',
-                        value: controller.fontSize.value,
-                        min: 10, max: 24, divisions: 14,
-                        label: controller.fontSize.value.round().toString(),
-                        onChanged: (v) => controller.fontSize.value = v,
-                      ),
-                      _buildColorSelector(
-                        'Text Color',
-                        controller.appTextColor.value,
-                            (color) => controller.appTextColor.value = color,
-                      ),
-                    ],
-                  ),
-                  ExpansionTile(
-                    title: Text('Theme', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    leading: Icon(Icons.view_day_outlined, color: Colors.white),
-                    childrenPadding: const EdgeInsets.all(16),
-                    children: [
-                      _buildMaterialColorSelector(
-                        'Theme Color',
-                        controller.appBarColor.value,
-                            (c) => controller.appBarColor.value = c,
-                      ),
-
-                    ],
-                  ),
-                  ExpansionTile(
-                    title: Text('Background', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    leading: Icon(Icons.layers_outlined, color: Colors.white),
-                    childrenPadding: const EdgeInsets.all(16),
-                    children: [
-                      _buildSettingsSlider(
-                        title: 'Overlay Opacity',
-                        value: controller.opacity.value,
-                        min: 0, max: 1, divisions: 10,
-                        label: (controller.opacity.value * 100).round().toString() + '%',
-                        onChanged: (v) {
-                          controller.opacity.value = v;
-
-                        },
-                      ),
-                      TextButton.icon(
-                        style: TextButton.styleFrom(foregroundColor: Colors.white, padding: const EdgeInsets.all(16)),
-                        icon: Icon(Icons.image_outlined, color: Colors.white70),
-                        label: Text('Set Wallpaper'),
-                        onPressed: () {
-                          Get.back();
-                          _showWallpaperDialog();
-                        },
-                      ),
-                    ],
-                  ),
-                  ExpansionTile(
-                    title: Text('Behavior', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    leading: Icon(Icons.toggle_on_outlined, color: Colors.white),
-                    childrenPadding: const EdgeInsets.all(16),
-                    children: [
-                      SwitchListTile(
-                        title: Text('Show Search Bar', style: TextStyle(color: Colors.white)),
-                        value: controller.showSearchBar.value,
-                        onChanged: (v) => controller.showSearchBar.value = v,
-                        activeColor: controller.appBarColor.value,
-                        secondary: Icon(Icons.search, color: Colors.white70),
-                      ),
-                      SwitchListTile(
-                        title: Text('Show Hidden Apps Tab', style: TextStyle(color: Colors.white)),
-                        value: controller.showHiddenApps.value,
-                        onChanged: (v) => controller.showHiddenApps.value = v,
-                        activeColor: controller.appBarColor.value,
-                        secondary: Icon(Icons.visibility_off_outlined, color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+        content:  TextButton(
+          onPressed: () {
+            Get.back(); // Close the settings dialog
+            controller.registerDevice(); // Call the new method
+          },
+          child: Text('Enroll Device', style: TextStyle(color: Colors.cyan)),
         ),
-        actions: [
-          (controller.userId.value =="")?Column(
-            children: [
-              TextButton(
-                onPressed: () {
-                  Get.back(); // Close the settings dialog
-                  controller.openLauncherSettings(); // Call the new method
-                },
-                child: Text('Set Launcher', style: TextStyle(color: Colors.cyan)),
-              ),
-              SizedBox(width: 10,),
-              TextButton(
-                onPressed: () {
-                  Get.back(); // Close the settings dialog
-                  controller.registerDevice(); // Call the new method
-                },
-                child: Text('Enroll Device', style: TextStyle(color: Colors.cyan)),
-              ),
-              SizedBox(width: 10,),
-            ],
-          ): Container(),
-          TextButton(
-            onPressed: () {
-              controller.resetUiSettings();
-              Get.back();
-            },
-            child: Text('Reset', style: TextStyle(color: Colors.amber)),
-          ),
-    SizedBox(width: 10),
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-          SizedBox(width: 4),
-        ],
+
       ),
     );
   }
+}
 
-  ExpansionPanel _buildSettingsPanel({
-    required bool isExpanded,
-    required IconData icon,
-    required String title,
-    required List<Widget> children,
-  }) {
-    return ExpansionPanel(
-      isExpanded: isExpanded,
-      backgroundColor: Color(0xFF3C3C3C),
-      headerBuilder: (context, isExpanded) {
-        return ListTile(
-          leading: Icon(icon, color: Colors.white),
-          title: Text(title,
-              style:
-              TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-        );
-      },
-      body: Container(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        width: double.infinity,
-        child: Column(children: children),
+class PermissionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final RxBool permissionGranted;
+  final Function onRequestPermission;
+
+  const PermissionCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.permissionGranted,
+    required this.onRequestPermission,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
       ),
-    );
-  }
-
-  Widget _buildSettingsSlider({
-    required String title,
-    required double value,
-    required double min,
-    required double max,
-    required int divisions,
-    required String label,
-    required ValueChanged<double> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Text(title, style: TextStyle(color: Colors.white70)),
-        ),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: divisions,
-          label: label,
-          onChanged: onChanged,
-          activeColor: controller.appBarColor.value,
-        ),
-        Divider(color: Colors.white24),
-      ],
-    );
-  }
-
-  Widget _buildColorSelector(
-      String title, Color currentColor, ValueChanged<Color> onChanged) {
-    return ListTile(
-      title: Text(title, style: TextStyle(color: Colors.white70)),
-      trailing: DropdownButton<Color>(
-        dropdownColor: Colors.grey[800],
-        value: currentColor,
-        onChanged: (color) => onChanged(color!),
-        items: [
-          Colors.white,
-          Colors.black,
-          Colors.blue,
-          Colors.red,
-          Colors.green,
-          Colors.yellow,
-          Colors.orange,
-          Colors.purple,
-        ].map((color) {
-          return DropdownMenuItem(
-              value: color,
-              child: Container(width: 20, height: 20, color: color));
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildMaterialColorSelector(String title, MaterialColor currentColor,
-      ValueChanged<MaterialColor> onChanged) {
-    return ListTile(
-      title: Text(title, style: TextStyle(color: Colors.white70)),
-      trailing: DropdownButton<MaterialColor>(
-        dropdownColor: Colors.grey[800],
-        value: currentColor,
-        onChanged: (color) => onChanged(color!),
-        items: [
-          Colors.blue, Colors.red, Colors.green, Colors.yellow, Colors.orange,
-          Colors.purple, Colors.teal, Colors.indigo, Colors.pink, Colors.amber,
-          Colors.cyan, Colors.lime, Colors.brown, Colors.grey, Colors.blueGrey,
-        ].map((color) {
-          return DropdownMenuItem(
-              value: color,
-              child: Container(width: 20, height: 20, color: color));
-        }).toList(),
-      ),
-    );
-  }
-
-  void _showWallpaperDialog() {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: Colors.grey[800],
-        title: Text('Change Wallpaper', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _wallpaperUrlController,
-              decoration: InputDecoration(
-                hintText: 'Paste image URL',
-                hintStyle: TextStyle(color: Colors.grey[400]),
-                border: OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.grey[700],
-              ),
-              style: TextStyle(color: Colors.white),
+            Row(
+              children: [
+                Icon(icon, color: Colors.blue[700], size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: permissionGranted.value
+                        ? Colors.green[100]
+                        : Colors.orange[100],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    permissionGranted.value ? 'Granted' : 'Required',
+                    style: TextStyle(
+                      color: permissionGranted.value
+                          ? Colors.green[800]
+                          : Colors.orange[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => controller.pickImage(),
-              child: Text(
-                'Choose from Gallery',
-                style: TextStyle(color: Colors.white),
+            SizedBox(height: 12),
+            Text(
+              description,
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 14,
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: controller.appBarColor.value,
+            ),
+            SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: permissionGranted.value
+                  ? Text(
+                'Permission granted',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+                  : ElevatedButton(
+                onPressed: () => onRequestPermission(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[700],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: Text('Grant Permission'),
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel', style: TextStyle(color: Colors.white)),
-          ),
-
-          TextButton(
-            onPressed: () async {
-              final url = _wallpaperUrlController.text.trim();
-              if (url.isNotEmpty) {
-                Get.back();
-                await controller.downloadAndSetWallpaper(url);
-              }
-            },
-            child: Text('Set Wallpaper', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
-    );
+    ));
   }
 }

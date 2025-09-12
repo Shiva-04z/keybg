@@ -4,6 +4,7 @@ import 'package:keybg/models/features.dart';
 
 Rx<Features?> features = Rx<Features?>(null);
  RxString wallpaperPath = ''.obs;
+ RxBool isLockEnabled = false.obs;
 final RxList<AppInfo> apps = <AppInfo>[].obs;
 final RxList<dynamic> hiddenApps = <dynamic>[].obs;
-final RxList<String> excludedApps = <String>["com.rishiwar.keybg"].obs;
+final RxList<String> excludedApps = <String>[].obs;

@@ -64,7 +64,7 @@ void hideSystemUI()
       if(data == false)
       {
         final sessions2Ref = FirebaseDatabase.instance.ref("users/${userId.value}").update({"Status": "UnLocked"});
-        Get.offAllNamed(RoutesConstant.myHomePage);
+        Get.offAllNamed(RoutesConstant.appPage);
         await stopKioskMode();
       }
     });
@@ -74,7 +74,7 @@ void hideSystemUI()
   Future<void> pushUnlockMode()
   async {
 
-    Get.offAllNamed(RoutesConstant.myHomePage);
+    Get.offAllNamed(RoutesConstant.appPage);
     final sessionRef = FirebaseDatabase.instance.ref("users/$userId/features");
     sessionRef.update({"isLockEnable":false});
     final sessions2Ref = FirebaseDatabase.instance.ref("users/$userId").update({"Status": "UnLocked"});

@@ -83,7 +83,14 @@ class AppPageView extends GetView<AppDeviceController> {
             ),
           ),
         )
-            : Container(color: Colors.grey[900])),
+            : Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              fit: BoxFit.cover,
+              image: AssetImage("assets/images/bg.png"),
+            ),
+          ),
+        ),),
         Obx(
               () => Container(
             height: MediaQuery.of(Get.context!).size.height*2,

@@ -11,28 +11,41 @@ class MyHomeScreenView extends GetView<MyHomeScreenController> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      floatingActionButton: FloatingActionButton(onPressed: (){Get.toNamed(RoutesConstant.permissionPage);}),
       // 1. Add GestureDetector to detect the swipe up
       body: GestureDetector(
         onVerticalDragEnd: (details) {
           // A negative velocity indicates an upward swipe.
           // The threshold (-500) prevents accidental swipes.
-          if (details.primaryVelocity != null && details.primaryVelocity! < -500) {
+          if (details.primaryVelocity != null &&
+              details.primaryVelocity! < -500) {
             Get.toNamed(RoutesConstant.appPage);
           }
         },
         child: Stack(
           children: [
             // Background Wallpaper
-            Obx(() => glb.wallpaperPath.isNotEmpty
-                ? Container(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: FileImage(File(glb.wallpaperPath.value)),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            )
-                : Container(color: Colors.grey[900])),
+            Obx(
+              () =>
+                  glb.wallpaperPath.isNotEmpty
+                      ? Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: FileImage(File(glb.wallpaperPath.value)),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
+                      : Container(
+
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            fit: BoxFit.cover,
+                            image: AssetImage("assets/images/bg.png",),
+                          ),
+                        ),
+                      ),
+            ),
 
             // Gradient Overlay
             Container(
@@ -62,10 +75,7 @@ class MyHomeScreenView extends GetView<MyHomeScreenController> {
                       children: [
                         AnimatedAnalogClock(
                           backgroundGradient: RadialGradient(
-                            colors: [
-                              Color(0xff152238),
-                              Color(0xff3c649f),
-                            ],
+                            colors: [Color(0xff152238), Color(0xff3c649f)],
                           ),
                           hourHandColor: Colors.white,
                           minuteHandColor: Colors.white,
@@ -76,25 +86,27 @@ class MyHomeScreenView extends GetView<MyHomeScreenController> {
                         ),
                         SizedBox(height: 20),
                         // Digital Time and Date
-                        Obx(() => Column(
-                          children: [
-                            Text(
-                              controller.currentTime.value,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.w300,
+                        Obx(
+                          () => Column(
+                            children: [
+                              Text(
+                                controller.currentTime.value,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w300,
+                                ),
                               ),
-                            ),
-                            Text(
-                              controller.currentDate.value,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 16,
+                              Text(
+                                controller.currentDate.value,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                          ],
-                        )),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -108,7 +120,11 @@ class MyHomeScreenView extends GetView<MyHomeScreenController> {
                 Spacer(flex: 1),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 40.0),
-                  child: Icon(Icons.keyboard_arrow_up, color: Colors.white.withOpacity(0.7), size: 32),
+                  child: Icon(
+                    Icons.keyboard_arrow_up,
+                    color: Colors.white.withOpacity(0.7),
+                    size: 32,
+                  ),
                 ),
               ],
             ),

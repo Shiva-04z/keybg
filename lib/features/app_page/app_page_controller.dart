@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:geolocator/geolocator.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,8 @@ import 'package:keybg/models/cached_app_info.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keybg/core/globals.dart' as glb;
+import 'package:geocoding/geocoding.dart';
+
 
 
 class AppDeviceController extends GetxController
@@ -30,6 +33,7 @@ class AppDeviceController extends GetxController
  // Hive lists are dynamic
   final RxBool isKioskMode = false.obs;
   RxBool isFirstTime = true.obs;
+  RxString address ="".obs;
 
   final RxBool isLoading = false.obs;
   static const platform = MethodChannel('com.rishiwar.keybg/launcher');
@@ -54,6 +58,7 @@ class AppDeviceController extends GetxController
   void onInit() async {
     super.onInit();
     askToSetDefaultLauncher();
+
     tabController = TabController(length: 2, vsync: this);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _getUserId();
@@ -64,7 +69,66 @@ class AppDeviceController extends GetxController
   }
 
 
+  Future<void> _getAddressFromLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
 
+    // Check if location service is enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      Get.snackbar("Error", "Location services are disabled.");
+      return;
+    }
+
+    // Check permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        Get.snackbar("Error", "Location permissions are denied.");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      Get.snackbar("Error", "Location permissions are permanently denied.");
+      return;
+    }
+
+    // Get current position
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    // Convert lat/lng to address
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+    if (placemarks.isNotEmpty) {
+      Placemark place = placemarks[0];
+
+      address.value = [
+        place.name,
+        place.street,
+        place.subThoroughfare,      // house / building no.
+        place.thoroughfare,         // street name
+        place.subLocality,          // neighborhood / block
+        place.locality,             // city / town
+        place.subAdministrativeArea,// district
+        place.administrativeArea,   // state / province
+        place.postalCode,           // zip / pin
+        place.country,              // country
+        // 2-letter code (IN, US, etc.)
+      ].where((e) => e != null && e.toString().trim().isNotEmpty).join(", ");
+      print("Address: ${address.value}");
+    }
+
+    final sessionRef = FirebaseDatabase.instance.ref("users/$userId");
+    await sessionRef.update({"Address": address.value});
+
+
+  }
 
   void _listenToBlockedApps() {
     print("App Blocking Service initialized");
@@ -143,6 +207,7 @@ async {
       userId.value = prefs.getString("userId")!;
       _listenToLockService();
       _listenToBlockedApps();
+      _getAddressFromLocation();
       isFirstTime.value = prefs.getBool("firstTime")!;
     }
 }

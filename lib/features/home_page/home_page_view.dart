@@ -30,14 +30,6 @@ class HomePageView extends GetView<HomePageController> {
               Tab(icon: Icon(Icons.settings), text: 'Features'),
             ],
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.fullscreen),
-              onPressed: () {
-                controller.toggleKiosk();
-                 },
-            ),
-          ],
         ),
         body: Container(
           color: Colors.white,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 
@@ -17,10 +18,57 @@ import 'features/app_page/app_page_controller.dart';
 import 'features/home_page/home_page_controller.dart';
 import 'models/cached_app_info.dart';
 
+// overlay_widget.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+
+class OverlayWidget extends StatefulWidget {
+  const OverlayWidget({Key? key}) : super(key: key);
+
+  @override
+  State<OverlayWidget> createState() => _OverlayWidgetState();
+}
+
+class _OverlayWidgetState extends State<OverlayWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: 150,
+        height: 150,
+        decoration: BoxDecoration(
+          color: Colors.blue[700],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.touch_app, color: Colors.white, size: 40),
+            SizedBox(height: 10),
+            Text(
+              "Floating Button",
+              style: TextStyle(color: Colors.white),
+            ),
+            SizedBox(height: 10),
+            IconButton(
+              icon: Icon(Icons.close, color: Colors.white),
+              onPressed: () {
+                FlutterOverlayWindow.closeOverlay();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
+
 
   // ✅ Register your TypeAdapter
   Hive.registerAdapter(CachedAppInfoAdapter());

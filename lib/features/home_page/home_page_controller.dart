@@ -21,13 +21,17 @@ class HomePageController extends GetxController {
   RxString userId = "pranav/1BsF11LTiaPu8jQIzDHa".obs;
   RxString unlockCode = "ABC123".obs;
 
+
+
   @override
   void onInit() {
     super.onInit();
     _getUserId();
 
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
+
 
   _getUserId()
   async {
@@ -45,6 +49,8 @@ class HomePageController extends GetxController {
 
 void hideSystemUI()
 { SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);}
+
+
 
 
 
@@ -67,7 +73,6 @@ void hideSystemUI()
 
   Future<void> pushUnlockMode()
   async {
-
 
     Get.offAllNamed(RoutesConstant.myHomePage);
     final sessionRef = FirebaseDatabase.instance.ref("users/$userId/features");

@@ -7,10 +7,6 @@ import android.widget.Toast;
 
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
-    @Override
-    public int getHeadlessDeviceOwnerMode() {
-        return DeviceAdminInfo.HEADLESS_DEVICE_OWNER_MODE_AFFILIATED;
-    }
 
     @Override
     public void onEnabled(Context context, Intent intent) {
